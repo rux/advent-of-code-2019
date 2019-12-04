@@ -15,7 +15,7 @@
    :direction-vector (direction-vector (subs command 0 1))
    :distance (Integer. (subs command 1))})
 
-(def starting-location [[0 0]])
+(def starting-location '([0 0]))
 
 
 
@@ -25,7 +25,7 @@
 (defn command-coordinates
   [locations command]
     (if (not (zero? (:distance command)))
-      (let [starting-location (last locations)
+      (let [starting-location (first locations) ;; locations is a list, so we take the head
             next-location [(+ (first starting-location) (first (:direction-vector command)))
                            (+ (second starting-location) (second (:direction-vector command)))]
             next-command (assoc command :distance (- (:distance command) 1))]
@@ -35,11 +35,17 @@
 
 (defn list-intersections
   [wire1 wire2]
-  (remove nil?
     (let [coords1 (reduce command-coordinates starting-location wire1)
-          coords2 (reduce command-coordinates starting-location wire2)]
-      (for [coord1 coords1]
-        (when (and (not (= [0 0] coord1)) (> (.indexOf coords2 coord1) 0)) coord1 )))))
+          _ (println "Count 1: " (count coords1))
+          coords2 (reduce command-coordinates starting-location wire2)
+          _ (println "Count 2: " (count coords2))
+          ;; duplicate values dont matter, so use sets
+          cset1 (set coords1)
+          cset2 (set coords2)
+          ]
+        (disj (clojure.set/intersection cset1 cset2) [0 0]) ;; remove the origin
+
+      ))
 
 
 (defn manhattan-distance

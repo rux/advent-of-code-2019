@@ -22,35 +22,40 @@
 
 
 
-(defn command-coordinates
+(defn get-coordinates
   [locations command]
     (if (not (zero? (:distance command)))
       (let [starting-location (first locations) ;; locations is a list, so we take the head
             next-location [(+ (first starting-location) (first (:direction-vector command)))
                            (+ (second starting-location) (second (:direction-vector command)))]
             next-command (assoc command :distance (- (:distance command) 1))]
-        (command-coordinates (conj locations next-location) next-command))
+        (get-coordinates (conj locations next-location) next-command))
     locations))
+
+(defn get-all-coordinates
+  [wire]
+  (reduce get-coordinates starting-location wire))
 
 
 (defn list-intersections
   [wire1 wire2]
-    (let [coords1 (reduce command-coordinates starting-location wire1)
+    (let [coords1 (get-all-coordinates wire1)
           _ (println "Count 1: " (count coords1))
-          coords2 (reduce command-coordinates starting-location wire2)
+          coords2 (get-all-coordinates wire2)
           _ (println "Count 2: " (count coords2))
           ;; duplicate values dont matter, so use sets
           cset1 (set coords1)
           cset2 (set coords2)
           ]
         (disj (clojure.set/intersection cset1 cset2) [0 0]) ;; remove the origin
-
       ))
-
 
 (defn manhattan-distance
   [coordinate]
   (+ (Math/abs (first coordinate)) (Math/abs (second coordinate))))
+
+
+
 
 
 
@@ -61,6 +66,19 @@
 
 
 
+
+(defn get-wire-timings
+  [wire1 wire2]
+  (apply min
+   (let [intersections (list-intersections wire1 wire2)
+        coords1 (get-all-coordinates wire1)
+        c1-length (count coords1)
+        coords2 (get-all-coordinates wire2)
+        c2-length (count coords2)]
+    (for [intersection intersections]
+      (let [timing-1 (- c1-length (.indexOf coords1 intersection) 1)   ;; minus extra 1 for off-by-one error!
+            timing-2 (- c2-length (.indexOf coords2 intersection) 1)]
+        (+ timing-1 timing-2))))))
 
 
 
